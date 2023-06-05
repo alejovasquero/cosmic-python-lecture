@@ -1,6 +1,6 @@
 # pytest: disable=redefined-outer-name
 import pytest
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
 from db_tables import metadata
