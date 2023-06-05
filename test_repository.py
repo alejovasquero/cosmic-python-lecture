@@ -110,6 +110,4 @@ def test_updating_a_batch(session):
     repo.add(batch)
     session.commit()
 
-    db_batch = repo.get(reference=batch.reference)
-
     assert get_allocations(session, "batch1") == {"order1", "order2"}
