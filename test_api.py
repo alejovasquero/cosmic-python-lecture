@@ -88,3 +88,13 @@ def test_deallocate():
     )
     assert r.ok
     assert r.json()["batchid"] == batch
+
+
+def post_to_add_batch(batch_ref, sku, qty, eta):
+    url = config.get_api_url()
+    r= requests.post(
+        f"{url}/batch", json={"ref": batch_ref, "sku": sku, "qty": qty, "eta": eta}
+    )
+
+    assert r.ok
+    assert r.json()["batchref"] == batch_ref

@@ -56,19 +56,44 @@ def test_commits():
 def test_deallocate_decrements_available_quantity():
     repo, session = FakeRepository([]), FakeSession()
     # TODO: you'll need to implement the services.add_batch method
-    services.add_batch("b1", "BLUE-PLINTH", 100, None, repo, session)
+    services.add_batch(model.Batch("b1", "BLUE-PLINTH", 100, None), repo, session)
     line = model.OrderLine("o1", "BLUE-PLINTH", 10)
     services.allocate(line, repo, session)
     batch = repo.get(reference="b1")
     assert batch.available_quantity == 90
-    # services.deallocate(...
-    ...
+    services.deallocate(line, repo=repo, session=session)
+    print(line.__hash__)
     assert batch.available_quantity == 100
 
 
 def test_deallocate_decrements_correct_quantity():
     ...  #  TODO - check that we decrement the right sku
+    repo, session = FakeRepository([]), FakeSession()
 
+    repo.add(model.Batch("model", "MODEL", 10, None))
+    repo.add(model.Batch("shoe", "SHOE", 10, None))
+
+    line = model.OrderLine(orderid="id", sku="SHOE", qty=5)
+
+    ref = services.allocate(line=line, repo=repo, session=session)
+
+    assert ref == "shoe"
+    batch: model.Batch = repo.get(reference="shoe")
+    assert batch.allocated_quantity == 5
+    
+    ids = services.deallocate(line, repo, session)
+    assert ids == [batch.reference]
+
+    batch: model.Batch = repo.get(reference=ids[0]) 
+    assert batch.sku == line.sku
+    assert batch.allocated_quantity == 0
 
 def test_trying_to_deallocate_unallocated_batch():
-    ...  #  TODO: should this error or pass silently? up to you.
+    repo, session = FakeRepository([]), FakeSession()
+
+    repo.add(model.Batch("ref", sku="MODEL", qty=100, eta=None))
+
+    line = model.OrderLine(orderid="order", sku="MODEL", qty=10)
+
+    with pytest.raises(model.LineNotAllocated, match="The line with order id order, is not allocated in any batch."):
+        services.deallocate(line=line, repo=repo, session=session)
