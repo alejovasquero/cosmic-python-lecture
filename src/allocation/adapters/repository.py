@@ -24,3 +24,26 @@ class SqlAlchemyRepository(AbstractRepository):
 
     def list(self):
         return self.session.query(model.Batch).all()
+
+
+class AsbtractProductRepository(abc.ABC):
+
+    @abc.abstractmethod
+    def get(self, sku: str) -> model.Product:
+        ...
+
+    @abc.abstractmethod
+    def add(self, product: model.Product) -> model.Product:
+        ...
+
+
+class ProductRepository(AsbtractProductRepository):
+
+    def __init__(self, session):
+        self.session = session
+
+    def get(self, sku: str) -> model.Product:
+        return self.session.query(model.Product).filter_by(sku=sku).one()
+
+    def add(self, product: model.Product) -> model.Product:
+        self.session.add(product)

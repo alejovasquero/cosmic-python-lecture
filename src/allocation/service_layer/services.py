@@ -4,7 +4,7 @@ from datetime import date
 
 from allocation.domain import model
 from allocation.domain.model import OrderLine
-from allocation.service_layer import unit_of_work
+from allocation.adapters import unit_of_work
 
 
 class InvalidSku(Exception):
@@ -20,6 +20,13 @@ def add_batch(
     uow: unit_of_work.AbstractUnitOfWork,
 ):
     with uow:
+        product = uow.products.get(sku=sku)
+
+        if product is None:
+            product = model.Product(sku=sku, batches=[])
+            uow.products.add(product=product)
+
+        product.batches.append(model.Batch(sku=sku, ref=ref, eta=eta, qty=qty))
         uow.batches.add(model.Batch(ref, sku, qty, eta))
         uow.commit()
 
@@ -30,9 +37,11 @@ def allocate(
 ) -> str:
     line = OrderLine(orderid, sku, qty)
     with uow:
-        batches = uow.batches.list()
-        if not is_valid_sku(line.sku, batches):
+        product = uow.products.get(sku=line.sku)
+
+        if product is None:
             raise InvalidSku(f"Invalid sku {line.sku}")
-        batchref = model.allocate(line, batches)
+        reference = product.allocate(line=line)
         uow.commit()
-    return batchref
+    
+    return reference
